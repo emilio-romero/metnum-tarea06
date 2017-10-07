@@ -1,1 +1,1 @@
-#instrucciones de ejecucion
+#instrucciones de compilacion y ejecucion
