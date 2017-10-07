@@ -5,8 +5,10 @@ OBJDIR:=obj
 
 ejecutable:$(OBJS) src/lectura.h 
 	gcc -o $@ $(OBJS) -std=c99 -lm 
-$(OBJDIR)/%.o: src/%.c
+$(OBJDIR)/%.o: src/%.c | $(OBJDIR)
 	gcc $(CFLAGS) $< -o $@
+$(OBJDIR):
+	mkdir -p $@
 #main.o: main.c 
 #	gcc -c main.c -std=c99
 #lectura.o: lectura.c 
