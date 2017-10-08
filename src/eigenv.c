@@ -1,24 +1,20 @@
 #include "eigenv.h" 
-double *CopiaVec(double *v, int n){
-  double *vaux=(double*)malloc(n*sizeof(double));
-  for(int i=0;i<n;i++) vaux[i]=v[i];
-return vaux;}
+void CopiaVec(double *copia,double *v, int n){
+  for(int i=0;i<n;i++) copia[i]=v[i];
+}
 
-double *InitVec(int n){
-  double *aux=(double*)malloc(n*sizeof(double));
+void InitVec(double *aux,int n){
   for(int i=0;i<n;i++) aux[i]=1.0;
-return aux;}
+}
 
-double **InitMat(int n){
-  double **aux=(double**)malloc(n*sizeof(double*));
-  for(int i=0;i<n;i++) aux[i]=(double*)malloc(n*sizeof(double));
+void InitMat(double **mat,int n){
   for(int i=0;i<n;i++){
    for(int j=0;j<n;j++){
-    aux[i][j]=0.0;
+    mat[i][j]=0.0;
    }
-   aux[i][i]=1.0;
+   mat[i][i]=1.0;
   }
-return aux;}
+}
 
 double *matxvec(double **A, double *x, int n){
   double *aux=(double*)malloc(n*sizeof(double));
@@ -71,7 +67,7 @@ return sqrt(norma);}
 double EigenValue(double **A, int n, int iter, double tol){
   double lamb,eaux; 
   double *vaux=(double*)malloc(n*sizeof(double));
-  vaux=InitVec(n);
+  InitVec(vaux,n);
  // FILE *out; 
  // out=fopen("error1.dat","w");
   int cont;
@@ -105,13 +101,13 @@ double InversePower(double **A, double dlta, int n, int iter,double tol,double *
       aaux[i][i]=A[i][i]-dlta;
       yaux[i]=0; waux[i]=0; raux[i]=0; 
    }//}
-  vaux=InitVec(n);
+  InitVec(vaux,n);
   int cont; 
   for(cont=0;cont<iter;cont++){
  //  printf("\nLlegas hasta aca\n");
    yaux=factLU(aaux,vaux,n); double ynorm=Norma2V(yaux,n);
-   waux=CopiaVec(vaux,n); for(int k=0;k<n;k++)  waux[k]=waux[k]/ynorm; 
-   vaux=CopiaVec(yaux,n); for(int k=0;k<n;k++)  vaux[k]=vaux[k]/ynorm; 
+   CopiaVec(waux,vaux,n); for(int k=0;k<n;k++)  waux[k]=waux[k]/ynorm; 
+   CopiaVec(vaux,yaux,n); for(int k=0;k<n;k++)  vaux[k]=vaux[k]/ynorm; 
    rho=ProdPunto(vaux,waux,n);
    mu=dlta+rho;
    for(int k=0;k<n;k++) raux[k]=waux[k]-rho*vaux[k];
@@ -119,6 +115,8 @@ double InversePower(double **A, double dlta, int n, int iter,double tol,double *
    if(eaux<tol) break; } 
   *Miter=cont;//printf("\n Se realizaron <%d> iteraciones",cont);
   *err=eaux;//printf("\n El error final es: %lf",eaux);
+   freeMatrix(aaux);
+   free(vaux); free(yaux); free(waux); free(raux);
 return mu;}
 
 double normaInf(double **A, int n){
@@ -171,22 +169,20 @@ return 0.0;
 double **Givens(int n, int mi, int mj, double c, double s){
   double **aux=(double**)malloc(n*sizeof(double*));
   for(int i=0;i<n;i++) aux[i]=(double*)malloc(n*sizeof(double));
-  aux=InitMat(n);
+  InitMat(aux,n);
   aux[mi][mi]=c; aux[mj][mj]=c;
   aux[mi][mj]=s; aux[mj][mi]=-s;
 return aux;}
 
-double **mulAG(double **A, int mi, int mj, int n, double c, double s){
- double **aux=(double**)malloc(n*sizeof(double*));
+void mulAG(double **aux, double **A, int mi, int mj, int n, double c, double s){
  for(int i=0;i<n;i++){
-  aux[i]=(double*)malloc(n*sizeof(double));
   for(int j=0;j<n;j++) aux[i][j]=A[i][j]; }
 
  for(int i=0;i<n;i++){
    aux[i][mi]=c*A[i][mi]-s*A[i][mj];
    aux[i][mj]=c*A[i][mj]+s*A[i][mi];
  }
-return aux;}
+}
 
 void mulGA(double **aux,double **A, int mi, int mj, int n, double c, double s){
  for(int i=0;i<n;i++){
@@ -195,17 +191,48 @@ void mulGA(double **aux,double **A, int mi, int mj, int n, double c, double s){
    aux[mi][j]=c*A[mi][j]-s*A[mj][j];
    aux[mj][j]=s*A[mi][j]+c*A[mj][j];
  }
-}
+} 
+//=======================================
+double AVVD(double **A, double **V, double **D,int n){
+  double **AV=(double**)malloc(n*sizeof(double*));  
+  double **VD=(double**)malloc(n*sizeof(double*));  
+  for(int i=0;i<n;i++){
+    AV[i]=(double*)malloc(n*sizeof(double));
+    VD[i]=(double*)malloc(n*sizeof(double));
+  }
+  double sumaav; double sumavd; 
+  double err;
+  for(int i=0;i<n;i++){
+    sumaav=0; sumavd=0;
+    for(int j=0;j<n;j++){
+      for(int k=0;k<n;k++){
+        sumaav+=A[i][k]*V[k][j];
+        sumavd+=V[i][k]*D[k][j];
+      }
+      AV[i][j]=sumaav;
+      VD[i][j]=sumavd;
+    }
+  } 
+  for(int i=0;i<n;i++) for(int j=0;j<n;j++) AV[i][j]=AV[i][j]-VD[i][j];
+  err=normaInf(AV,n);
+
+for(int i=0;i<n;i++){free(AV[i]); free(VD[i]);}
+free(AV); free(VD);
+return err;}
 //=======================================
 
-double **Jacobi(double **A, int n, int iter, double tol){
- double **V=(double**)malloc(n*sizeof(double*));
+void Jacobi(double **V,double **A, int n, int iter, double tol){
  double **aux=(double**)malloc(n*sizeof(double*));
+ double **Aoriginal=(double**)malloc(n*sizeof(double*));
+ double **Vaux=(double**)malloc(n*sizeof(double*));
  double delta,t,c,s,Amax;
  int maxi,maxj; 
-  for(int i=0;i<n;i++){ V[i]=(double*)malloc(n*sizeof(double));
-  aux[i]=(double*)malloc(n*sizeof(double));}
-  V=InitMat(n);
+  for(int i=0;i<n;i++){
+  aux[i]=(double*)malloc(n*sizeof(double));
+  Aoriginal[i]=(double*)malloc(n*sizeof(double));
+  Vaux[i]=(double*)malloc(n*sizeof(double));}
+for(int i=0;i<n;i++) for(int j=0;j<n;j++) Aoriginal[i][j]=A[i][j];
+ InitMat(V,n);
  int cont;
  for(cont=0;cont<iter;cont++){
    Amax=encontrarMax(A,n,&maxi,&maxj);// printf("Par i,j: %d, %d\n",maxi,maxj);
@@ -213,16 +240,25 @@ double **Jacobi(double **A, int n, int iter, double tol){
    delta=(A[maxj][maxj]-A[maxi][maxi])/(2.0*A[maxi][maxj]);
    t=sgn(delta)/(fabs(delta)+sqrt(1+delta*delta));
    c=1/sqrt(1+t*t); s=c*t;
-   aux=mulAG(A,maxi,maxj,n,c,s);// for(int b=0;b<n;b++)free(aux->aux[b]);
+   mulAG(aux,A,maxi,maxj,n,c,s);// for(int b=0;b<n;b++)free(aux->aux[b]);
    mulGA(A,aux,maxi,maxj,n,c,s);
-   V=mulAG(V,maxi,maxj,n,c,s);
+   mulAG(Vaux,V,maxi,maxj,n,c,s);
+   for(int k=0;k<n;k++) for(int l=0;l<n;l++) V[k][l]=Vaux[k][l];
  }
- printf("La iteracion de jacobi: %d\n",cont);
- printf("El error es de: %g\n",Amax);
+ if(n<30){
+ printf("Matriz de eigenvalores\n");
  printMatrix(A,n,n);
+ printf("Matriz de eigenvectores\n");
+ printMatrix(V,n,n);}
+ else{
+   writeMatrix(A,n,n,"Greateigenvalues.bin");
+   writeMatrix(V,n,n,"Greateigenvectors.bin");
+ }
+ printf("El error es de: %g\n",AVVD(Aoriginal,V,A,n));
+ 
 //=====Liberacion y regreso
-for(int i=0;i<n;i++) {free(aux[i]);}
- free(aux);
-return V;}
+for(int i=0;i<n;i++) {free(aux[i]); free(Vaux[i]); free(Aoriginal[i]);}
+ free(aux); free(Vaux); free(Aoriginal);
+}
 //=====Fin funcion jacobi
 

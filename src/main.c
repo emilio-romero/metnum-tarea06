@@ -2,16 +2,23 @@
 int main(int argc, char *argv[]){
 char archivo[30]; 
 int iter; double tol; 
-int nr, nc; 
+int nr, nc,nrb,ncb; 
 double **A,**v; 
-
+double **B;
 readParams(argc,argv,archivo,&iter,&tol);
 A=readMatrix(archivo,&nr,&nc);
-printf("%d %d %lf \n",nr,iter,tol);
-v=Jacobi(A,nr,iter,sqrt(DBL_EPSILON));
-//printf("La norma de A es: %lf \n",normaInf(A,nr));
-//InversePower(A,0.0,nr,iter,tol);
-//paresEigen(A,nr,iter,tol,50);
+B=readMatrix("mat005.bin",&nrb,&ncb);
+v=createMatrix(nr,nc);
+printf("==========================\n");
+printf("Ejecucion de la potencia inversa\n");
+printf("==========================\n");
+paresEigen(B,nrb,iter,tol,50);
+printf("==========================\n");
+printf("Ejecucion de Jacobi\n");
+printf("==========================\n");
+Jacobi(v,A,nr,iter,sqrt(DBL_EPSILON));
+
+
 freeMatrix(A);
 freeMatrix(v);
 printf("\nSu programa ha terminado excelso caballero/a\n");

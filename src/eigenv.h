@@ -6,9 +6,9 @@
 #include <float.h> 
 #include "lectura.h" 
 #include "solucionadores.h"
-double *CopiaVec(double *v, int n);
-double *InitVec(int n);
-double **InitMat(int n);
+void CopiaVec(double *copia,double *v, int n);
+void InitVec(double *aux,int n);
+void InitMat(double **mat,int n);
 double *matxvec(double **A, double *x, int n);
 double *NormalizeVec(double *v, int n);
 double ProdPunto(double *a, double *b, int n);
@@ -22,9 +22,10 @@ void paresEigen(double **A, int n, int iter, double tol, int N);
 double encontrarMax(double **A, int n, int *mi, int *mj);
 double sgn(double x);
 double **Givens(int n, int mi, int mj, double c, double s);
-double ** mulAG(double **A, int mi, int mj, int n,double c, double s);
+void mulAG(double **aux,double **A, int mi, int mj, int n,double c, double s);
 void mulGA(double **aux,double **A, int mi, int mj, int n, double c, double s);
-double **Jacobi(double **A, int n, int iter, double tol);
+double AVVD(double **A,double **V, double **D, int n);
+void Jacobi(double **V,double **A, int n, int iter, double tol);
 #endif
 
 
